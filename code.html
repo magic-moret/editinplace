@@ -1,0 +1,173 @@
+/*Ok.- heres the code.*/
+
+
+/*
+lets just start it of with the html to get the understanding of functionality a little mapped out.
+So, i got this form.
+it's basicly just a regular form with a table that get populated from a backend-java-thingy.
+The population of the table comes from this thingy: "for(Iterator it = backe....." to make it short its just a javacode
+that does some database-queries and returns them so i get the data in rows...
+
+th table-part is pherhaps the part of this code thats kinda messy.
+So to break it up a little bit:
+the java-code runs a loop and values gets assigned to each td every run of the loop. So, tr is each element, 
+and td is each value kinda...
+we got a ID and a value and a class for every td. 
+id holds which value we are editing, and class holds the functionality.
+*/
+
+</form>
+ <form name="dataTable" action="ctrl" method="POST">
+ <input type="hidden" name="action" value="item" />
+ <input type="hidden" name="spec" value="dataTable" />
+ <input type="hidden" name="pricebook_ri" value="<%=pricebook_ri%>" />
+ <br/>
+ <br/>
+ <table id="dataTable" class="tooltip">
+ <tr>
+  <td>Identifiertype</td>
+	<td width="10"></td>
+	<td>Identifier</td>
+	<td width="10"></td>
+	<td>Info</td>
+	<td width="30"></td>
+	<td>Markup</td>
+	<td width="10"></td>
+	<td>Netprice</td>
+	<td width="10"></td>
+	<td>Delete</td>
+	<td width="10"></td>
+	<td></td>
+ </tr>
+ <br/>
+<%
+int iterator = 0;
+for(Iterator it = backenddata.getEntries().iterator();it.hasNext();) {
+	EntryData entry = (EntryData)it.next();
+	
+%>
+	<tr>
+		<td><div id="editable1_<%=iterator%>" class="editable_select" onBlur="reset();" name="editable_select"><%=entry.getIdentifiertype()%></div><input type="hidden" id="newValue1_<%=iterator%>" name="newValue1_<%=iterator%>" value=""></td>
+		<td></td>
+		<td><div id="editable2_<%=iterator%>" class="editable"><%=entry.getIdentifier()%></div><input type="hidden" id="newValue2_<%=iterator%>" name="newValue2_<%=iterator%>" value="">
+		<td></td>
+		<td><%=entry.getIdentifierTitle() %></td>
+		<td></td>	    
+		<td><div id="editable3_<%=iterator%>" class="editable"><%if(entry.getEntrytype().equals("MARKUP")){out.println(entry.getEntrycontent());} %></div><input type="hidden" id="newValue3_<%=iterator%>" name="newValue3_<%=iterator%>" value=""></td>
+		<td></td>
+		<td><div id="editable4_<%=iterator%>" class="editable"><%if(entry.getEntrytype().equals("NETPRICE")){out.println(entry.getEntrycontent());} %></div><input type="hidden" id="newValue4_<%=iterator%>" name="newValue4_<%=iterator%>" value=""></td>
+		<td></td>
+		<td><input type="hidden" value="<%= entry.getIdentifiertype() %>" name="original_Identifiertype_<%=iterator%>" id="original_Identifiertype_<%=iterator%>"/></td>
+		<td><input type="hidden" value="<%= entry.getEntrycontent() %>" name="original_EntryContent_<%=iterator%>" id="original_EntryContent_<%=iterator%>"/></td>		
+		<td><input type="hidden" value="<%= entry.getIdentifier() %>" name="original_Identifier_<%=iterator%>" id="original_Identifier_<%=iterator%>"/></td>
+		<td><input type="hidden" value="<%= entry.getEntrycontent() %>" name="original_Entrytype_<%=iterator%>" id="original_Entrytype_<%=iterator%>"/></td>
+		
+	</tr>
+<% 
+iterator++;} 
+%>
+<tr><td><input type="hidden" value="<%=iterator%>" name="iterator" id="iterator"/></td></tr>
+ </table>
+ <br/>
+ <input type="button" name="updateData" id="updateData" value="update data" style="display:none;"/>
+ </form>
+
+
+
+
+/*
+hopefully some of the html makes sense.
+So, lets start with the jquery. i'm gonna comment straight into the code here.. it makes it easier to
+udnerstand every step.
+
+*/
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $("div.editable").click(function(){  /*Ok, click function for every td that got a class of "editable"*/
+		var newInput = "<input type ='text' class='newInput' value=\""+$(this).text()+"\">";   /*lets make a new string with html-syntaxing*/
+		$(this).html(newInput);		/*and now lets print that string out. So basicly, on a click we print out a string that is html-syntax*/
+		var id = $(this).attr("id"); /*id of the value getting edited*/	
+		$("input.newInput").focus();
+		$("input.newInput").keydown(function(event){
+			if(event.which == 13){	/*look for enter-key to be pressed. on enter we expect the editing to be done.*/
+				var value = $(this).val(); /*gets the new value*/
+				var str = id;
+				var strArray = str.match(/(\d+)/g); /*gets the numbers from the id, so we can use this to store the value in the hidden field*/
+			 	for(var i = 0;i<strArray.length;i++){				
+					if(i == 0){var temp0 = strArray[i];} 
+					if(i == 1){var temp1 = strArray[i];}
+				}
+			 	$("#newValue"+temp0+"_"+temp1).val(value); /*in this part we saves the value to the hidden-field using the numbers from the original id*/
+			 	$("#editable" +temp0+"_"+temp1).text($(this).val()); /*and here we make the visible html changes with the new value*/
+			 	$(this).blur();
+			 	slide();
+			}
+		});
+		$("input.newInput").keyup(function(event){ /*look for esc-key to be pressed. if you understand the code above this should be easy. It'-s just a cancel-function really.*/
+			if(event.which == 27){	
+				var str = id;
+				var strArray = str.match(/(\d+)/g);
+			 	for(var i = 0;i<strArray.length;i++){				
+					if(i == 0){var temp0 = strArray[i];} 
+					if(i == 1){var temp1 = strArray[i];}
+				}
+			 	var tempval = "";
+			 	if(temp0 == 2){tempval = $("#original_Identifier_"+temp1).val();}
+			 	else if(temp0 == 3){tempval = $("#original_EntryContent_"+temp1).val();}
+			 	else if(temp0 == 4){tempval = $("#original_EntryContent_"+temp1).val();}
+			 	$("#editable" +temp0+"_"+temp1).text(tempval);
+			 	$(this).blur();
+				//slide();
+			}
+		});
+	});
+});
+ $(window).load(function(){
+	var clickFunction = function(){  /*ok, so this is almost the same as earlier. we print out a string which consist of html-syntax. only that here we print a drop-down meny and not only a input box*/
+	  var id = $(this).attr("id");	  
+	  var select = '<select name="select" id="'+id+'">'; 
+	  var options = ["Items", "IN", "DROPDOWN"];
+	   for(var i = 0;i<options.length;i++)
+	     select += '<option value="'+options[i]+'">'+options[i]+'</option>';
+	     select += '</select>';
+	     $(this).html(select);
+	     $(this).unbind('click',clickFunction);
+	}
+	$("div.editable_select").bind('click',clickFunction); /*when a td with class of editable_select get clicken, we run the above code.*/
+});
+$('#dataTable select[name^="select"]').live('change', (function () { /*looks for a click inside the newly created dropdown. and assignes the new selected value to a hidden field and changes the visible html to the clicked value..*/
+    var value1 = ($("option:selected", this).val());
+    var id = $(this).attr("id");
+    var str2 = id;                                  
+	var str2Array = str2.match(/(\d+)/g);
+	for(var i = 0;i<str2Array.length;i++){				
+		if(i == 0){var temp01 = str2Array[i];} 
+		if(i == 1){var temp11 = str2Array[i];}
+	}
+    $("#newValue"+temp01+"_"+temp11).val(value1);
+   // $("#editable" +temp01+"_"+temp11).text($(this).val());
+    slide();
+}));
+function slide(){
+		$("#updateData").slideDown("fast"); 
+}
+$(function(){
+	$('#updateData').click(function(){
+		updatePricebookTable();
+	});
+});
+
+function updatePricebookTable(){ /* this is just the function i use to update the databse.  I do this in java and i wont be posting this code. But basicly what it does is loop in the iterator-value from the html and update every database-value with the data from the hidden-fields in the html. if there is no new value in the hidden filed it just skips it. */
+	document.dataTable.spec.value="dataTable";
+	document.dataTable.submit();
+}
+</script> 
+
+/*as i said its kinda messy. but its kinda small and i find it kinda understandable. Some of the projects with the same funcitonality i found on the web had like 4-500 lines of code, this is like 60 or something.... so you wont break your brain going through it.
+
+As a little sidenote. this stuff can be done so much better! don't see this as a finished project, its just some code i did at work to get shit working. 
+if you want sexy, or perfect this is not it. at all ;)
+
+*/
